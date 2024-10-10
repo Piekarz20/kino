@@ -37,3 +37,13 @@ aside {
   justify-content: center;
   align-items: center;
 }
+
+.content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+input[name="miejsce"] {
+  background-color: aqua;
+}
