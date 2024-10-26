@@ -1,5 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
-	const seats = {
+	const selectedSeatsDiv = document.getElementById('selectedSeats');
+	const totalPriceDiv = document.getElementById('totalPrice');
+	const bookButton = document.getElementById('bookButton');
+	const seats = document.querySelectorAll('.seat');
+
+	const seatsPrices = {
 		regular: {
 			normal: 22.9,
 			reduced: 18.9,
@@ -10,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		},
 	};
 
-	const selectedSeats = new Map();
+	const selectedSeats = {};
 
 	function handleSeatSelection(event, row, seat) {
 		const seatId = `${row}/${seat}`;
@@ -19,29 +24,27 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (event.target.checked) {
 			event.target.classList.remove('available', 'vip');
 			event.target.classList.add('selected');
-			selectedSeats.set(seatId, {
+			selectedSeats[seatId] = {
 				row,
 				seat,
 				isVip,
 				isReduced: false,
-			});
+			};
 		} else {
 			event.target.classList.remove('selected');
 			event.target.classList.add(isVip ? 'vip' : 'available');
-			selectedSeats.delete(seatId);
+			delete selectedSeats[seatId];
 		}
 
 		updateCart();
 	}
 
 	function updateCart() {
-		const selectedSeatsDiv = document.getElementById('selectedSeats');
-		const totalPriceDiv = document.getElementById('totalPrice');
-
 		selectedSeatsDiv.innerHTML = '';
 		let total = 0;
 
-		selectedSeats.forEach((seatData, seatId) => {
+		for (const seatId in selectedSeats) {
+			const seatData = selectedSeats[seatId];
 			const seatItem = document.createElement('div');
 			seatItem.className = 'seat-item';
 
@@ -67,11 +70,11 @@ document.addEventListener('DOMContentLoaded', () => {
 			price.className = 'seat-price';
 			const seatPrice = seatData.isVip
 				? seatData.isReduced
-					? seats.vip.reduced
-					: seats.vip.normal
+					? seatsPrices.vip.reduced
+					: seatsPrices.vip.normal
 				: seatData.isReduced
-				? seats.regular.reduced
-				: seats.regular.normal;
+				? seatsPrices.regular.reduced
+				: seatsPrices.regular.normal;
 			price.textContent = `${seatPrice.toFixed(2)} zł`;
 
 			total += seatPrice;
@@ -83,30 +86,37 @@ document.addEventListener('DOMContentLoaded', () => {
 			seatItem.appendChild(seatInfo);
 			seatItem.appendChild(controls);
 			selectedSeatsDiv.appendChild(seatItem);
-		});
+		}
 
 		totalPriceDiv.textContent = `Suma: ${total.toFixed(2)} zł`;
 	}
 
-	document.querySelectorAll('.seat').forEach((seat) => {
+	seats.forEach((seat) => {
 		const [row, seatNum] = seat.id.split('/').map(Number);
 		seat.addEventListener('change', (e) =>
 			handleSeatSelection(e, row, seatNum)
 		);
 	});
 
-	document.getElementById('bookButton').addEventListener('click', () => {
-		if (selectedSeats.size === 0) {
+	bookButton.addEventListener('click', () => {
+		if (Object.keys(selectedSeats).length === 0) {
 			alert('Wybierz przynajmniej jedno miejsce!');
 			return;
 		}
+
 		alert('Rezerwacja została przyjęta!');
-		selectedSeats.clear();
-		document.querySelectorAll('.seat').forEach((seat) => {
+
+		// Clear selections
+		for (const seatId in selectedSeats) {
+			delete selectedSeats[seatId];
+		}
+
+		seats.forEach((seat) => {
 			seat.checked = false;
 			seat.classList.remove('selected');
 			seat.classList.add(seat.classList.contains('vip') ? 'vip' : 'available');
 		});
+
 		updateCart();
 	});
 });
